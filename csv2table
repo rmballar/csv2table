@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+import csv
+import argparse
+import sys
+
+class CommandLine:
+
+	def __init__(self, inOpts=None):
+		"""
+		Implement a parser to interpret the command line argv string using argparse.
+		"""
+		self.parser = argparse.ArgumentParser(
+			description='This program creates LaTeX tables from csv/tsv files.',
+			add_help=True,  # default is True
+			prefix_chars='-',
+			usage='%(prog)s [options]'
+			)
+		self.parser.add_argument('-f', '--inputfile', action='store', help='Input file name (Default is stdin)')
+		self.parser.add_argument('-d', '--delimiter', action='store', choices={'|',',',';','t'}, default=',', help="Specify the delimiter (Default is ',')")
+		self.parser.add_argument('-a', '--align', action='store', choices={'c','l','r'}, default='c',
+		 help="Column alignment ('c' for center, 'l' for left, 'r' for right)")
+		self.parser.add_argument('-l', '--hline', action='store_true', help='Separates table rows with a line')
+		if inOpts is None:
+			self.args = self.parser.parse_args()
+		else:
+			self.args = self.parser.parse_args(inOpts)
+
+class Table():
+	
+	def __init__(self, file_name, file_delimiter=',', align='c', row_sep=''):
+		self.file_name = file_name
+		self.file_delimiter = file_delimiter
+		self.align = align
+		self.row_sep = row_sep
+		self.rows, self.columns = self.read_csv()
+		self.TeX_table = """\\begin{{tabular}}{{{}}}\n{}\\end{{tabular}}""".format(
+		self.columns, self.rows)
+
+	def read_csv(self):
+		table_rows = self.row_sep
+		num_cols = 0
+		with open(self.file_name, newline='') as file:
+			reader = csv.reader(file, delimiter=self.file_delimiter)
+			for row in reader:
+				num_cols = max(num_cols, len(row))
+				data_row = ' & '.join(row)
+				table_rows += data_row + ' \\\\\n' + self.row_sep
+		column_setup = self.align*num_cols
+		return table_rows, column_setup
+
+def main(inCL=None):
+	file_name = sys.stdin
+	delimiter = ','
+	row_sep = ''
+
+	if inCL is None:
+		command_line = CommandLine()
+	else:
+		command_line = CommandLine(inCL)
+	if command_line.args.inputfile:
+		file_name = command_line.args.inputfile
+	if command_line.args.hline:
+		row_sep = '\\hline\n'
+	if command_line.args.delimiter == 't':
+		delimiter = '\t'
+	else:
+		delimiter = command_line.args.delimiter
+	alignment = command_line.args.align
+
+	table = Table(file_name, file_delimiter=delimiter, 
+	  align=alignment, row_sep=row_sep)
+	print(table.TeX_table)
+
+if __name__ == '__main__':
+	main()
