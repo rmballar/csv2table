@@ -3,7 +3,7 @@ Python tool for converting .csv/.tsv files to LaTeX tables.
 
 usage: csv2table [options]
 
-## optional arguments
+## Optional Arguments
 
 **-h** (--help): Show this help message and exit
 
